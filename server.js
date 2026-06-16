@@ -389,28 +389,47 @@ app.post("/api/analyze", upload.single("file"), async (req, res) => {
 
     const response = await client.messages.create({
       model: "claude-opus-4-8",
-      max_tokens: 8000,
+      max_tokens: 16000,
       thinking: { type: "adaptive" },
       output_config: {
-        effort: "high",
+        effort: "medium",
         format: { type: "json_schema", schema: DIAGNOSIS_SCHEMA },
       },
       system: SYSTEM_PROMPT,
       messages: [{ role: "user", content }],
     });
 
-    const text = response.content
+    // Estrae il testo e lo ripulisce (eventuali fence ```json o testo attorno).
+    let raw = response.content
       .filter((b) => b.type === "text")
       .map((b) => b.text)
-      .join("");
+      .join("")
+      .trim();
+    raw = raw.replace(/^```(?:json)?/i, "").replace(/```$/i, "").trim();
+    const firstBrace = raw.indexOf("{");
+    const lastBrace = raw.lastIndexOf("}");
+    const jsonStr = firstBrace >= 0 && lastBrace > firstBrace ? raw.slice(firstBrace, lastBrace + 1) : raw;
 
     let result;
     try {
-      result = JSON.parse(text);
+      result = JSON.parse(jsonStr);
     } catch (e) {
-      console.error("JSON parse error:", e?.message, "raw:", text.slice(0, 300));
+      console.error(
+        "JSON parse fail. stop_reason:",
+        response.stop_reason,
+        "len:",
+        raw.length,
+        "head:",
+        raw.slice(0, 200),
+        "tail:",
+        raw.slice(-200)
+      );
+      const hint =
+        response.stop_reason === "max_tokens"
+          ? " (la risposta era troppo lunga: riprova, ho già aumentato il limite)"
+          : "";
       return res.status(502).json({
-        error: "La diagnosi non è stata generata correttamente. Riprova tra poco.",
+        error: "La diagnosi non è stata generata correttamente. Riprova tra poco." + hint,
       });
     }
 
