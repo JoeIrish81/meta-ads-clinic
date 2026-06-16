@@ -1,0 +1,20 @@
+{
+  "name": "ads-analyzer",
+  "version": "0.1.0",
+  "description": "Analizza screenshot o report di Meta Ads e dice cosa funziona, cosa no e cosa modificare.",
+  "type": "module",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.69.0",
+    "dotenv": "^17.0.0",
+    "exceljs": "^4.4.0",
+    "express": "^5.1.0",
+    "multer": "^2.0.0"
+  }
+}
