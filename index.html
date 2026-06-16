@@ -210,6 +210,16 @@
 #mac-app .mac-extra[open] > summary::before { content: "➖ "; }
 #mac-app .mac-extra .mac-extra-body { padding: 12px 14px; }
 
+#mac-app .mac-diag-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; }
+#mac-app .mac-tools { display: flex; gap: 8px; }
+#mac-app .mac-tools button {
+  font-family: inherit; font-size: 12.5px; font-weight: 600; cursor: pointer;
+  border: 1px solid var(--mac-border); background: var(--mac-soft); color: var(--mac-navy);
+  border-radius: 8px; padding: 7px 12px; transition: border-color .15s, background .15s;
+}
+#mac-app .mac-tools button:hover { border-color: var(--mac-orange); background: #fff3ec; }
+#mac-app .mac-tools button:disabled { opacity: .55; cursor: default; }
+
 #mac-app .mac-foot { text-align: center; color: var(--mac-muted); font-size: 11.5px; margin-top: 14px; }
 </style>
 </head>
@@ -320,7 +330,13 @@
 
     <!-- OUTPUT -->
     <div class="mac-card">
-      <h2>🩺 Diagnosi</h2>
+      <div class="mac-diag-head">
+        <h2 style="margin:0">🩺 Diagnosi</h2>
+        <div class="mac-tools" id="mac-tools" style="display:none">
+          <button type="button" id="mac-pdf">📥 Scarica PDF</button>
+          <button type="button" id="mac-share">🔗 Condividi</button>
+        </div>
+      </div>
       <div class="mac-result" id="mac-result">
         <div class="mac-placeholder">Qui comparirà la diagnosi a riquadri: stato di salute, dove intervenire (creatività, pubblico, budget, landing…) e cosa fare subito.</div>
       </div>
@@ -330,6 +346,7 @@
   <div class="mac-foot">Meta Ads Clinic · by Giovanni Perilli — analisi assistita da AI, di supporto al lavoro del media buyer.</div>
 </div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <script>
 (function () {
   // ===== CONFIG =====
@@ -341,6 +358,8 @@
 
   var form = $("mac-form"), fileInput = $("mac-file"), drop = $("mac-drop");
   var chip = $("mac-chip"), chipName = $("mac-chipname"), result = $("mac-result"), go = $("mac-go");
+  var tools = $("mac-tools"), pdfBtn = $("mac-pdf"), shareBtn = $("mac-share");
+  var lastDiagnosis = null;
 
   drop.addEventListener("click", function () { fileInput.click(); });
   ["dragover", "dragenter"].forEach(function (e) { drop.addEventListener(e, function (ev) { ev.preventDefault(); drop.classList.add("over"); }); });
@@ -489,15 +508,85 @@
       html += '</ul></div>';
     }
 
-    html += '<div class="d-refresh">💡 Hai aggiunto o corretto un dato qui sopra? Premi di nuovo <b>«Analizza la campagna»</b>: il file resta caricato, non devi ricaricarlo.</div>';
-
-    result.innerHTML = html;
+    lastDiagnosis = d;
+    result.innerHTML =
+      '<div id="mac-report">' + html + '</div>' +
+      '<div class="d-refresh">💡 Hai aggiunto o corretto un dato qui sopra? Premi di nuovo <b>«Analizza la campagna»</b>: il file resta caricato, non devi ricaricarlo.</div>';
+    if (tools) tools.style.display = "flex";
   }
+
+  // Testo semplice del report, per condivisione / copia
+  function buildShareText(d) {
+    var L = [];
+    L.push("🩺 Meta Ads Clinic — Diagnosi");
+    if (d.voto != null) L.push("Voto: " + d.voto + "/10 (" + (d.salute || "") + ")");
+    var meta = [];
+    if (d.periodo) meta.push("Periodo: " + d.periodo);
+    if (d.livello) meta.push("Livello: " + d.livello);
+    if (meta.length) L.push(meta.join(" · "));
+    if (d.quadro_generale) L.push("\n" + d.quadro_generale);
+    if (d.problema_principale) L.push("\n⚠️ Problema n.1: " + d.problema_principale);
+    if (d.azioni_urgenti && d.azioni_urgenti.length) {
+      L.push("\n⚡ Cosa fare subito:");
+      d.azioni_urgenti.forEach(function (a) { L.push("• " + a); });
+    }
+    var attive = (d.ads || []).filter(function (a) { return a.stato === "attiva"; });
+    if (attive.length) {
+      L.push("\n🗂 Inserzioni attive:");
+      attive.forEach(function (a) { L.push("• " + a.nome + (a.nota ? " (" + a.nota + ")" : "") + " → " + a.azione); });
+    }
+    if (d.cosa_serve && d.cosa_serve.length) {
+      L.push("\n❓ Per affinare aggiungi: " + d.cosa_serve.join("; "));
+    }
+    L.push("\n— Meta Ads Clinic · by Giovanni Perilli");
+    return L.join("\n");
+  }
+
+  // Scarica PDF
+  if (pdfBtn) pdfBtn.addEventListener("click", function () {
+    var el = $("mac-report");
+    if (!el || typeof html2pdf === "undefined") {
+      alert("Funzione PDF non disponibile al momento. Riprova tra un attimo.");
+      return;
+    }
+    pdfBtn.disabled = true;
+    var prev = pdfBtn.textContent;
+    pdfBtn.textContent = "Preparo il PDF…";
+    html2pdf().set({
+      margin: 8,
+      filename: "diagnosi-meta-ads-clinic.pdf",
+      image: { type: "jpeg", quality: 0.95 },
+      html2canvas: { scale: 2, useCORS: true, backgroundColor: "#ffffff" },
+      jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
+    }).from(el).save().then(function () {
+      pdfBtn.disabled = false; pdfBtn.textContent = prev;
+    }).catch(function () {
+      pdfBtn.disabled = false; pdfBtn.textContent = prev;
+    });
+  });
+
+  // Condividi (mobile: condivisione nativa; desktop: copia negli appunti)
+  if (shareBtn) shareBtn.addEventListener("click", function () {
+    if (!lastDiagnosis) return;
+    var text = buildShareText(lastDiagnosis);
+    if (navigator.share) {
+      navigator.share({ title: "Meta Ads Clinic — Diagnosi", text: text }).catch(function () {});
+    } else if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(function () {
+        var prev = shareBtn.textContent;
+        shareBtn.textContent = "✓ Copiato!";
+        setTimeout(function () { shareBtn.textContent = prev; }, 1800);
+      });
+    } else {
+      alert(text);
+    }
+  });
 
   form.addEventListener("submit", function (e) {
     e.preventDefault();
     go.disabled = true;
     go.innerHTML = '<span class="mac-spin"></span>Diagnosi in corso…';
+    if (tools) tools.style.display = "none";
     result.innerHTML = '<div class="mac-placeholder"><span class="mac-spin"></span>Sto leggendo i dati e preparando la diagnosi…</div>';
 
     var fd = new FormData(form);
