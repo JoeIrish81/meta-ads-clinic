@@ -195,9 +195,11 @@
 #mac-app .d-chart { border: 1px solid var(--mac-border); border-radius: 10px; padding: 11px 13px; margin-bottom: 10px; }
 #mac-app .d-chart-t { font-size: 13px; font-weight: 700; color: var(--mac-navy); margin-bottom: 9px; }
 #mac-app .d-chart-t span { color: var(--mac-muted); font-weight: 600; font-size: 12px; }
-#mac-app .d-bar-row { display: grid; grid-template-columns: 96px 1fr 58px; align-items: center; gap: 9px; margin: 6px 0; }
-#mac-app .d-bar-l { font-size: 12px; color: var(--mac-text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-#mac-app .d-bar-track { background: var(--mac-soft); border-radius: 6px; height: 15px; overflow: hidden; }
+#mac-app .d-bar-row { margin: 9px 0; }
+#mac-app .d-bar-l { font-size: 12.5px; color: var(--mac-text); margin-bottom: 4px; white-space: normal; word-break: break-word; }
+#mac-app .d-bar-l em { color: var(--mac-muted); font-style: normal; font-size: 11.5px; }
+#mac-app .d-bar-line { display: grid; grid-template-columns: 1fr 54px; gap: 9px; align-items: center; }
+#mac-app .d-bar-track { background: var(--mac-soft); border-radius: 6px; height: 13px; overflow: hidden; }
 #mac-app .d-bar-fill { height: 100%; background: var(--mac-grad); border-radius: 6px; min-width: 2px; transition: width .4s; }
 #mac-app .d-bar-v { font-size: 12px; font-weight: 700; color: var(--mac-navy); text-align: right; }
 
@@ -379,9 +381,9 @@
     var h = '<div class="d-chart"><div class="d-chart-t">' + esc(ch.titolo) + (ch.unita ? ' <span>(' + esc(ch.unita) + ')</span>' : "") + '</div>';
     ch.voci.forEach(function (v) {
       var val = Number(v.valore) || 0, pct = Math.round(Math.abs(val) / max * 100);
-      h += '<div class="d-bar-row"><div class="d-bar-l" title="' + esc(v.label) + '">' + esc(v.label) + '</div>';
-      h += '<div class="d-bar-track"><div class="d-bar-fill" style="width:' + pct + '%"></div></div>';
-      h += '<div class="d-bar-v">' + esc(fmt(val)) + '</div></div>';
+      h += '<div class="d-bar-row"><div class="d-bar-l">' + esc(v.label) + (v.nota ? ' <em>· ' + esc(v.nota) + '</em>' : "") + '</div>';
+      h += '<div class="d-bar-line"><div class="d-bar-track"><div class="d-bar-fill" style="width:' + pct + '%"></div></div>';
+      h += '<div class="d-bar-v">' + esc(fmt(val)) + '</div></div></div>';
     });
     return h + '</div>';
   }
