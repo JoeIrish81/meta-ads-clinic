@@ -42,8 +42,7 @@
 #mac-app .mac-by { margin: 2px 0 0; color: var(--mac-muted); font-size: 13px; font-weight: 600; letter-spacing: .3px; }
 #mac-app .mac-sub { margin: 8px 0 0; color: var(--mac-muted); font-size: 15px; }
 
-#mac-app .mac-grid { display: grid; grid-template-columns: 0.9fr 1.1fr; gap: 18px; align-items: start; }
-@media (max-width: 900px) { #mac-app .mac-grid { grid-template-columns: 1fr; } }
+#mac-app .mac-grid { display: grid; grid-template-columns: 1fr; gap: 18px; align-items: start; }
 
 #mac-app .mac-card {
   background: var(--mac-bg); border: 1px solid var(--mac-border); border-radius: var(--mac-radius);
@@ -61,7 +60,7 @@
 }
 #mac-app textarea { resize: vertical; min-height: 70px; }
 #mac-app input:focus, #mac-app select:focus, #mac-app textarea:focus { outline: none; border-color: var(--mac-orange); }
-#mac-app .mac-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+#mac-app .mac-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 12px; }
 
 #mac-app .mac-guide { border: 1px solid var(--mac-border); border-radius: 11px; margin-bottom: 16px; overflow: hidden; }
 #mac-app .mac-guide > summary {
@@ -126,6 +125,17 @@
 #mac-app .d-problem { background: #fff6e0; border: 1px solid #f3d98a; border-radius: 10px; padding: 11px 13px; font-size: 14px; margin-bottom: 16px; }
 #mac-app .d-problem b { color: #9a6b00; }
 
+#mac-app .d-metrics { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 9px; }
+#mac-app .d-metric { border: 1px solid var(--mac-border); border-left: 4px solid var(--mac-border); border-radius: 9px; padding: 8px 11px; background: #fff; }
+#mac-app .d-metric.rosso { border-left-color: var(--mac-red); }
+#mac-app .d-metric.giallo { border-left-color: var(--mac-yellow); }
+#mac-app .d-metric.verde { border-left-color: var(--mac-green); }
+#mac-app .d-metric .d-ml { font-size: 11px; color: var(--mac-muted); margin-bottom: 1px; }
+#mac-app .d-metric .d-mv { font-size: 15px; font-weight: 700; color: var(--mac-navy); word-break: break-word; }
+
+#mac-app .d-refresh { margin-top: 16px; font-size: 12.5px; color: var(--mac-muted); background: var(--mac-soft); border-radius: 9px; padding: 10px 12px; text-align: center; }
+#mac-app .d-refresh b { color: var(--mac-navy); }
+
 #mac-app .d-section { font-size: 13px; font-weight: 800; color: var(--mac-navy); text-transform: uppercase; letter-spacing: .4px; margin: 18px 0 10px; }
 
 #mac-app .d-boxes { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
@@ -167,28 +177,8 @@
 
 <div id="mac-app">
   <div class="mac-head">
-    <div class="mac-logo">
-      <img id="mac-logo-img" alt="Meta Ads Clinic" style="display:none" onerror="this.style.display='none';var s=document.getElementById('mac-logo-svg');if(s)s.style.display='block';" />
-      <svg id="mac-logo-svg" viewBox="0 0 200 118" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-        <defs>
-          <linearGradient id="macg" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0" stop-color="#ff7d2e"/><stop offset="1" stop-color="#e23812"/>
-          </linearGradient>
-        </defs>
-        <polygon points="186,16 104,16 112,30 194,30" fill="#1c3c5e"/>
-        <polygon points="168,38 104,38 112,52 176,52" fill="#1c3c5e"/>
-        <polygon points="150,60 104,60 112,74 158,74" fill="#1c3c5e"/>
-        <polygon points="134,76 118,76 80,104 96,104" fill="#1c3c5e"/>
-        <polygon points="14,16 96,16 88,30 6,30" fill="url(#macg)"/>
-        <polygon points="32,38 96,38 88,52 24,52" fill="url(#macg)"/>
-        <polygon points="50,60 96,60 88,74 42,74" fill="url(#macg)"/>
-        <polygon points="66,76 82,76 120,104 104,104" fill="url(#macg)"/>
-      </svg>
-      <div>
-        <div class="mac-title"><span class="o">Meta Ads</span> <span class="n">Clinic</span></div>
-        <div class="mac-by">by Giovanni Perilli</div>
-      </div>
-    </div>
+    <div class="mac-title"><span class="o">Meta Ads</span> <span class="n">Clinic</span></div>
+    <div class="mac-by">by Giovanni Perilli</div>
     <p class="mac-sub">Carica lo screenshot o il report della tua campagna Meta e scopri cosa funziona, cosa no e cosa modificare.</p>
   </div>
 
@@ -277,16 +267,11 @@
 <script>
 (function () {
   // ===== CONFIG =====
-  // backendUrl: vuoto = stesso dominio. logoUrl: URL del logo PNG (vuoto = logo SVG).
-  var CONFIG = { backendUrl: "", logoUrl: "" };
+  // backendUrl: vuoto = stesso dominio (per GoHighLevel: metti qui l'URL del backend).
+  var CONFIG = { backendUrl: "" };
   var ENDPOINT = (CONFIG.backendUrl || "") + "/api/analyze";
 
   var $ = function (id) { return document.getElementById(id); };
-  // Logo: prova il file logo.png (o CONFIG.logoUrl). Se non c'è, l'onerror mostra l'SVG.
-  (function () {
-    var li = $("mac-logo-img"), ls = $("mac-logo-svg");
-    if (li && ls) { ls.style.display = "none"; li.style.display = "block"; li.src = CONFIG.logoUrl || "/logo.png"; }
-  })();
 
   var form = $("mac-form"), fileInput = $("mac-file"), drop = $("mac-drop");
   var chip = $("mac-chip"), chipName = $("mac-chipname"), result = $("mac-result"), go = $("mac-go");
@@ -320,8 +305,17 @@
 
     if (d.problema_principale) html += '<div class="d-problem"><b>⚠️ Problema n.1:</b> ' + esc(d.problema_principale) + '</div>';
 
+    if (d.metriche && d.metriche.length) {
+      html += '<div class="d-section">📊 Numeri chiave dal report</div><div class="d-metrics">';
+      d.metriche.forEach(function (m) {
+        var st = (["verde", "giallo", "rosso", "neutro"].indexOf(m.stato) >= 0) ? m.stato : "neutro";
+        html += '<div class="d-metric ' + st + '"><div class="d-ml">' + esc(m.label) + '</div><div class="d-mv">' + esc(m.valore) + '</div></div>';
+      });
+      html += '</div>';
+    }
+
     if (d.interventi && d.interventi.length) {
-      html += '<div class="d-section">Dove intervenire</div><div class="d-boxes">';
+      html += '<div class="d-section">🔍 Dove intervenire</div><div class="d-boxes">';
       d.interventi.forEach(function (it) {
         var g = sev(it.gravita);
         html += '<div class="d-box ' + g + '">';
@@ -334,16 +328,17 @@
       html += '</div>';
     }
 
-    if (d.azioni_urgenti && d.azioni_urgenti.length) {
-      html += '<div class="d-urgent"><div class="d-uh">⚡ Da fare subito</div><ul>';
-      d.azioni_urgenti.forEach(function (a) { html += '<li>' + esc(a) + '</li>'; });
-      html += '</ul></div>';
-    }
-
     if (d.cosa_funziona && d.cosa_funziona.length) {
       html += '<div class="d-section">🟢 Cosa funziona</div><div class="d-good">';
       d.cosa_funziona.forEach(function (c) { html += '<span>' + esc(c) + '</span>'; });
       html += '</div>';
+    }
+
+    if (d.azioni_urgenti && d.azioni_urgenti.length) {
+      html += '<div class="d-section">⚡ Cosa fare subito</div>';
+      html += '<div class="d-urgent"><div class="d-uh">Le mosse prioritarie, in ordine</div><ul>';
+      d.azioni_urgenti.forEach(function (a) { html += '<li>' + esc(a) + '</li>'; });
+      html += '</ul></div>';
     }
 
     if (d.cosa_serve && d.cosa_serve.length) {
@@ -351,6 +346,8 @@
       d.cosa_serve.forEach(function (c) { html += '<li>' + esc(c) + '</li>'; });
       html += '</ul></div>';
     }
+
+    html += '<div class="d-refresh">💡 Hai aggiunto un dato (es. il <b>ticket medio</b>)? Modifica i campi qui sopra e premi di nuovo <b>«Analizza la campagna»</b>: il file resta caricato, non devi ricaricarlo.</div>';
 
     result.innerHTML = html;
   }

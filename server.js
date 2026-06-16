@@ -95,6 +95,14 @@ const SYSTEM_PROMPT = `Sei "Meta Ads Clinic", il medico delle campagne Meta Ads 
 - "salute": "verde" (va bene), "giallo" (da sistemare), "rosso" (critico). "voto": 0–10.
 - "quadro_generale": 2–3 frasi da medico sullo stato di salute complessivo.
 - "problema_principale": UNA frase, il problema n.1 da curare subito.
+- "metriche": i NUMERI CHIAVE letti dal report, da mostrare all'utente come "cartella clinica". Includi tutto ciò che è presente nei dati, ad esempio:
+   - Importo speso; Risultati e Costo per risultato (CPL/CPA); CTR (link); CPM; CPC; Frequenza; Copertura; Impressioni.
+   - Clic sul link e "Visualizzazioni della pagina di destinazione" (i caricamenti completati): mostra ENTRAMBI e calcola il RAPPORTO clic→visualizzazioni (es. "504 / 1.560 = 32%"). Se molti clic ma poche visualizzazioni (es. <70–80%) = landing lenta o abbandono prima del caricamento → stato "rosso"/"giallo" e citalo anche negli interventi (Landing/Tracking).
+   - Vendite/ROAS/Valore conversioni se presenti.
+   - "Link in uscita" (URL di destinazione) → stato "neutro".
+   - Titolo/i principali dell'annuncio se presenti → stato "neutro".
+   - Città / aree più performanti se c'è un breakdown geografico (es. "Milano 12 lead, Roma 8") → stato in base al rendimento.
+   Per ogni metrica: label breve, valore con unità (es. "1.560 clic", "9,40€", "32%"), stato "verde"|"giallo"|"rosso"|"neutro". Non inventare: metti solo ciò che è nei dati.
 - "cosa_funziona": 2–4 punti positivi, ognuno col numero che lo dimostra.
 - "interventi": ogni voce è un BOX (un'area da curare). Ordina dal più grave. Campi:
    - "area": ambito (es. "Creatività", "Copy", "Targeting/Pubblico", "Budget", "Offerta", "Landing", "CPL/CPA").
@@ -118,6 +126,19 @@ const DIAGNOSIS_SCHEMA = {
     voto: { type: "integer" },
     quadro_generale: { type: "string" },
     problema_principale: { type: "string" },
+    metriche: {
+      type: "array",
+      items: {
+        type: "object",
+        additionalProperties: false,
+        properties: {
+          label: { type: "string" },
+          valore: { type: "string" },
+          stato: { type: "string", enum: ["verde", "giallo", "rosso", "neutro"] },
+        },
+        required: ["label", "valore", "stato"],
+      },
+    },
     cosa_funziona: { type: "array", items: { type: "string" } },
     interventi: {
       type: "array",
@@ -144,6 +165,7 @@ const DIAGNOSIS_SCHEMA = {
     "voto",
     "quadro_generale",
     "problema_principale",
+    "metriche",
     "cosa_funziona",
     "interventi",
     "azioni_urgenti",
