@@ -26,6 +26,13 @@ app.use((req, res, next) => {
 // Serve la pagina del widget (index.html nella stessa cartella del server).
 app.get("/", (req, res) => res.sendFile(join(__dirname, "index.html")));
 
+// Logo opzionale: se carichi un file logo.png accanto al server, viene mostrato.
+app.get("/logo.png", (req, res) =>
+  res.sendFile(join(__dirname, "logo.png"), (err) => {
+    if (err && !res.headersSent) res.status(404).end();
+  })
+);
+
 // Formati immagine accettati dall'API vision
 const IMAGE_TYPES = {
   "image/png": "image/png",
@@ -65,66 +72,84 @@ async function xlsxToText(buffer) {
   return out;
 }
 
-const SYSTEM_PROMPT = `Sei il "medico delle ads": un media buyer senior specializzato in Meta Ads (Facebook/Instagram) che fa la DIAGNOSI di una campagna come un clinico. Guardi i dati, capisci lo stato di salute della campagna, e prescrivi la "terapia": dici in modo chiaro DOVE intervenire, COSA fare e PERCHÉ. Tono: professionale, diretto, empatico ma onesto — come un bravo medico che spiega al paziente.
+const SYSTEM_PROMPT = `Sei "Meta Ads Clinic", il medico delle campagne Meta Ads (Facebook/Instagram). Fai una DIAGNOSI come un clinico e restituisci SOLO un oggetto JSON conforme allo schema imposto (nessun testo fuori dal JSON). Tono dei testi: medico, chiaro, diretto, concreto. Tutto in italiano.
 
 ## Come ragioni
-1. Parti SEMPRE dall'obiettivo della campagna e dall'economia del cliente (ticket medio, margine). Una metrica "buona" o "cattiva" dipende dal contesto: un CPA di 30€ è ottimo se il prodotto vale 300€, pessimo se vale 25€.
-2. Usa i benchmark Meta Ads come riferimento, ma adattali al settore e alla geografia. Benchmark indicativi (variano per settore/paese):
-   - CTR (link click): sotto 0,8% = debole, 0,8–1,5% = nella media, sopra 1,5% = buono. Per campagne di notorietà conta più il CTR "all", per conversioni il CTR link.
-   - CPM: dipende molto da paese e targeting; in Italia spesso 4–12€. Un CPM molto alto con poco budget = aste affollate o pubblico troppo ristretto.
-   - Frequenza: sopra ~3 in pochi giorni = creatività che si "brucia" / pubblico troppo piccolo → stanchezza creativa.
-   - Tasso di conversione landing: sotto l'1–2% spesso indica un problema di landing page o di promessa, non di campagna.
-   - Hook rate / retention video: se il 3-sec view rate è basso, il problema è il primo frame/hook.
-3. Distingui SEMPRE dove sta il collo di bottiglia nel funnel:
-   - Poche impression/copertura → budget, bid, o pubblico troppo ristretto.
-   - Tante impression ma CTR basso → problema di CREATIVITÀ (visual + hook + copy) o di targeting non in target.
-   - Buon CTR ma poche conversioni → problema di LANDING PAGE, offerta, prezzo, o coerenza annuncio↔pagina.
-   - CPA alto ma vendite ok → questione di margine/scala, non per forza un errore.
-4. Sii consapevole del LIVELLO di analisi e dillo all'utente quando serve:
-   - Livello INSERZIONE (ad) = la "sezione creatività": qui giudichi visual, hook, copy, formato. Se il problema è il CTR o l'hook, l'azione è qui.
-   - Livello GRUPPO DI INSERZIONI (ad set): qui giudichi pubblico/targeting, posizionamenti, budget, ottimizzazione. Se il problema è copertura, CPM, o consegna, l'azione è qui.
-   - Livello CAMPAGNA: obiettivo e strategia di budget (CBO/ABO).
-   Indica sempre, per ogni azione, A QUALE LIVELLO va fatta la modifica.
-5. Sui TESTI/COPY: valutali (hook, primi 3 righe, CTA) SOLO se ti vengono forniti — nel report con i testi, o in uno screenshot dell'anteprima dell'annuncio. Se hai solo lo screenshot della tabella metriche (solo numeri), NON inventare il copy: di' che per valutare creatività e copy serve allegare i testi o l'anteprima.
-6. Se i dati sono insufficienti o letti da uno screenshot a bassa risoluzione, dichiaralo e di' quali dati servirebbero. Non inventare numeri.
-7. Tieni conto del tempo di attività: una campagna con pochi giorni o sotto ~50 conversioni è ancora in "fase di apprendimento" — sconsiglia modifiche drastiche premature.
-8. CAMPI DI CONTESTO FACOLTATIVI: l'utente può non averli compilati. NON bloccarti e NON rifiutarti di analizzare. Procedi così:
-   a) Prova prima a DEDURRE i dati mancanti dal report/screenshot (es. spesa, risultati, periodo, a volte l'area geografica o l'obiettivo).
-   b) Fai comunque la migliore analisi possibile con ciò che hai.
-   c) Solo alla fine, nella sezione "Cosa mi serve da te", elenca in modo specifico le informazioni che mancano e che non hai potuto dedurre (es. città, ticket medio, obiettivo), spiega PERCHÉ servono e COME cambierebbero la diagnosi, e invita l'utente ad aggiungerle. Se manca un dato cruciale per un giudizio (es. senza ticket medio non puoi dire se il CPA è buono), dillo chiaramente ma dai comunque il resto dell'analisi.
+1. Parti SEMPRE dall'obiettivo e dall'economia del cliente (ticket medio, margine). Una metrica è buona/cattiva solo nel contesto: un CPA di 30€ è ottimo se il cliente vale 300€, pessimo se vale 25€.
+2. DEDUCI dai dati/colonne/nome file e mettili nei campi:
+   - "periodo": l'intervallo di date analizzato (es. "8–14 giu 2026"). Spesso è nel nome del file o nelle colonne data. Se non deducibile: "non rilevato".
+   - "livello": "Inserzione (creatività)" se ci sono nomi di singole inserzioni/creatività; "Gruppo di inserzioni" se ci sono ad set; "Campagna" se solo campagne. Se non chiaro: "non rilevato".
+3. Benchmark indicativi (adattali a settore/paese):
+   - CTR link: <0,8% debole · 0,8–1,5% medio · >1,5% buono.
+   - CPM: in Italia spesso 4–12€. Molto alto con poco budget = aste affollate / pubblico ristretto.
+   - Frequenza >~3 in pochi giorni = creatività "bruciata".
+   - Conversione landing <1–2% = problema landing/offerta, non campagna.
+   - Video: 3-sec view basso = problema di hook/primo frame.
+4. Trova il collo di bottiglia: poca copertura→budget/pubblico; tante impression ma CTR basso→creatività/targeting; buon CTR ma poche conversioni→landing/offerta/prezzo; CPA alto ma vendite ok→margine/scala.
+5. Se tutto il budget è concentrato su 1 sola inserzione, segnalalo e di' come testare/bilanciare.
+6. Copy: valutalo SOLO se i testi sono forniti. Le immagini delle creatività di solito NON sono nei file Excel di Meta: se non le hai, non giudicare il visual e, se utile, mettilo tra le cose che servono.
+7. Pochi giorni o <~50 conversioni = fase di apprendimento: sconsiglia modifiche drastiche.
+8. Non inventare numeri non presenti.
 
-## Formato della risposta (in italiano, Markdown)
-Rispondi in modo conciso e azionabile, in questa struttura:
+## Come compilare i campi
+- "salute": "verde" (va bene), "giallo" (da sistemare), "rosso" (critico). "voto": 0–10.
+- "quadro_generale": 2–3 frasi da medico sullo stato di salute complessivo.
+- "problema_principale": UNA frase, il problema n.1 da curare subito.
+- "cosa_funziona": 2–4 punti positivi, ognuno col numero che lo dimostra.
+- "interventi": ogni voce è un BOX (un'area da curare). Ordina dal più grave. Campi:
+   - "area": ambito (es. "Creatività", "Copy", "Targeting/Pubblico", "Budget", "Offerta", "Landing", "CPL/CPA").
+   - "gravita": "rosso" | "giallo" | "verde".
+   - "diagnosi": sintomo + causa probabile, col numero che lo dimostra.
+   - "azione": COSA FARE, concreto e da medico. Esempi: "Metti in pausa l'inserzione X (CPL 18€, doppio della media)", "Rinnova il visual e testa 2 nuovi hook", "Sposta il 60% del budget sull'inserzione Y che converte", "Restringi il pubblico / escludi i 18–24".
+   - "dove": livello + punto preciso (es. "livello Inserzione → creatività", "livello Gruppo di inserzioni → pubblico", "Landing page").
+- "azioni_urgenti": 2–4 cose da fare SUBITO, brevissime e operative (es. "Refresh creativo sull'inserzione con frequenza 4,2", "Metti in pausa l'ad con CPL 18€").
+- "cosa_serve": SOLO i dati davvero mancanti e non deducibili (es. città, ticket medio, obiettivo). Per ciascuno UNA riga col perché serve. Se non manca nulla, lascia vuoto.
 
-### 🩺 Quadro generale
-2-3 righe da "medico": stato di salute complessivo della campagna e qual è il problema n.1 da curare subito.
+Sii sintetico: frasi brevi, niente muri di testo. L'utente deve capire al volo dove intervenire e cosa fare.`;
 
-### 🟢 Cosa funziona
-Elenco puntato di ciò che va bene, ognuno con il numero che lo dimostra.
-
-### 🔴 Cosa non funziona
-Per ogni problema, una riga: **[metrica/area]** — sintomo → causa probabile.
-
-### 🟡 Da tenere d'occhio
-Cose non ancora critiche ma da monitorare.
-
-### 💊 Terapia — interventi in ordine di priorità
-Lista numerata. Per OGNI intervento usa SEMPRE questo schema, concreto e specifico (mai generico):
-**N. [titolo breve dell'intervento]**
-- **Dove:** a quale livello e in quale punto agire (es. "livello Inserzione → creatività", "livello Gruppo di inserzioni → pubblico", "landing page").
-- **Cosa:** l'azione precisa da fare.
-- **Perché:** il motivo, legato al dato che lo dimostra.
-
-Esempio del livello di concretezza richiesto:
-**1. Rinnova la creatività**
-- **Dove:** livello Inserzione (creatività).
-- **Cosa:** sostituisci il visual e testa 2 nuovi hook nelle prime 3 righe del copy.
-- **Perché:** frequenza a 4,2 con CTR in calo = creatività "bruciata", non un problema di budget.
-
-### ❓ Cosa mi serve da te (se manca)
-Solo se rilevante: le informazioni che non hai potuto dedurre (es. città, ticket medio, obiettivo), perché servono e come cambierebbero la diagnosi. Invita l'utente ad aggiungerle nei campi o nelle note.
-
-Non usare un tono da manuale. Parla come un medico che guarda la "cartella clinica" della campagna: chiaro, sintetico, senza disclaimer inutili.`;
+// Schema della diagnosi (structured output) — il modello deve restituire questo JSON.
+const DIAGNOSIS_SCHEMA = {
+  type: "object",
+  additionalProperties: false,
+  properties: {
+    periodo: { type: "string" },
+    livello: { type: "string" },
+    salute: { type: "string", enum: ["verde", "giallo", "rosso"] },
+    voto: { type: "integer" },
+    quadro_generale: { type: "string" },
+    problema_principale: { type: "string" },
+    cosa_funziona: { type: "array", items: { type: "string" } },
+    interventi: {
+      type: "array",
+      items: {
+        type: "object",
+        additionalProperties: false,
+        properties: {
+          area: { type: "string" },
+          gravita: { type: "string", enum: ["rosso", "giallo", "verde"] },
+          diagnosi: { type: "string" },
+          azione: { type: "string" },
+          dove: { type: "string" },
+        },
+        required: ["area", "gravita", "diagnosi", "azione", "dove"],
+      },
+    },
+    azioni_urgenti: { type: "array", items: { type: "string" } },
+    cosa_serve: { type: "array", items: { type: "string" } },
+  },
+  required: [
+    "periodo",
+    "livello",
+    "salute",
+    "voto",
+    "quadro_generale",
+    "problema_principale",
+    "cosa_funziona",
+    "interventi",
+    "azioni_urgenti",
+    "cosa_serve",
+  ],
+};
 
 app.post("/api/analyze", upload.single("file"), async (req, res) => {
   try {
@@ -249,7 +274,10 @@ app.post("/api/analyze", upload.single("file"), async (req, res) => {
       model: "claude-opus-4-8",
       max_tokens: 8000,
       thinking: { type: "adaptive" },
-      output_config: { effort: "high" },
+      output_config: {
+        effort: "high",
+        format: { type: "json_schema", schema: DIAGNOSIS_SCHEMA },
+      },
       system: SYSTEM_PROMPT,
       messages: [{ role: "user", content }],
     });
@@ -257,9 +285,19 @@ app.post("/api/analyze", upload.single("file"), async (req, res) => {
     const text = response.content
       .filter((b) => b.type === "text")
       .map((b) => b.text)
-      .join("\n");
+      .join("");
 
-    res.json({ analysis: text });
+    let result;
+    try {
+      result = JSON.parse(text);
+    } catch (e) {
+      console.error("JSON parse error:", e?.message, "raw:", text.slice(0, 300));
+      return res.status(502).json({
+        error: "La diagnosi non è stata generata correttamente. Riprova tra poco.",
+      });
+    }
+
+    res.json({ result });
   } catch (err) {
     console.error(err);
     const msg =
