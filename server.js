@@ -2,6 +2,7 @@ import express from "express";
 import multer from "multer";
 import Anthropic from "@anthropic-ai/sdk";
 import ExcelJS from "exceljs";
+import { runNightly } from "./nightly.js";
 import "dotenv/config";
 import { fileURLToPath } from "url";
 import { dirname, join } from "path";
@@ -118,9 +119,9 @@ const SYSTEM_PROMPT = `Sei "Meta Ads Clinic", il medico delle campagne Meta Ads 
    - "budget": budget rilevato (es. "270€/giorno" o "≈ 1.900€ in 7 giorni").
    - "durata": da quanto è attiva / periodo coperto (es. "8–14 giu 2026 (7 giorni)").
    - "obiettivo": prova a dedurre il tipo (es. "Contatti/Lead — Modulo Facebook", "Vendite/Conversioni", "Traffico"). Se incerto, "".
-   - "citta": area geografica del target. Se la campagna copre tutto il paese scrivi "Tutta Italia"; se è ristretta, indica le città/regioni (es. "Milano e provincia"). "" se non deducibile.
+   - "citta": area geografica dove girano le ads. DEDUCILA da: (a) la suddivisione per regione/città se presente nei dati; (b) i NOMI di campagne/gruppi/inserzioni (es. "Milano", "Lombardia", "Italia", "Nord"); (c) ciò che scrive l'utente. Scrivi UNA di queste forme: "Campagna nazionale (tutta Italia)" · "Multi-città (es. Milano, Roma, Torino)" · oppure la singola area (es. "Solo Milano e provincia"). Se NON è deducibile da nulla, lascia "" e mettilo in "cosa_serve" ("esporta con suddivisione per Regione/Città per capire dove girano e rendono le ads").
    - "settore": settore/prodotto se deducibile, altrimenti "".
-- "dispersione": stima del budget "disperso" = spesa finita su inserzioni/segmenti/posizionamenti con risultati nulli o molto costosi rispetto agli altri. PESA per SPESA e TEMPO (non per numero di ads). Campi:
+- "dispersione": stima del budget "disperso" = spesa finita su inserzioni/segmenti/posizionamenti/AREE GEOGRAFICHE con risultati nulli o molto costosi rispetto agli altri. PESA per SPESA e TEMPO (non per numero di ads). Se c'è la suddivisione per regione/città, considera anche la dispersione GEOGRAFICA (es. spendi su aree che non convertono) e citala. Campi:
    - "valore": € e % sul totale (es. "≈ 320€ (11% della spesa)"). Se NON calcolabile (solo dato aggregato, niente dettaglio per inserzione/segmento) → "non calcolabile".
    - "giudizio": "verde" (fisiologica), "giallo" (alta), "rosso" (grave spreco), "neutro" (non calcolabile). Regola pratica: in fase di test/apprendimento una dispersione fino a ~10–15% della spesa è normale; oltre è un problema. Rapporta SEMPRE alla spesa totale (disperdere 200€ su 30.000€ è normale; su 600€ è grave).
    - "commento": 1–2 frasi: è accettabile o no, e perché (considera apprendimento e spesa totale). Se "non calcolabile", spiega che serve l'export a livello Inserzione.
@@ -273,6 +274,44 @@ const DIAGNOSIS_SCHEMA = {
   ],
 };
 
+// Estrae il JSON da una risposta che potrebbe avere fence o testo attorno.
+function extractJson(text) {
+  let raw = String(text || "").trim();
+  raw = raw.replace(/^```(?:json)?/i, "").replace(/```$/i, "").trim();
+  const a = raw.indexOf("{"), b = raw.lastIndexOf("}");
+  return a >= 0 && b > a ? raw.slice(a, b + 1) : raw;
+}
+
+// Esegue la diagnosi (riusata sia dall'endpoint manuale sia dal job notturno).
+async function runDiagnosis(content) {
+  const response = await client.messages.create({
+    model: "claude-opus-4-8",
+    max_tokens: 16000,
+    thinking: { type: "adaptive" },
+    output_config: {
+      effort: "medium",
+      format: { type: "json_schema", schema: DIAGNOSIS_SCHEMA },
+    },
+    system: SYSTEM_PROMPT,
+    messages: [{ role: "user", content }],
+  });
+  const rawText = response.content
+    .filter((b) => b.type === "text")
+    .map((b) => b.text)
+    .join("")
+    .trim();
+  try {
+    return JSON.parse(extractJson(rawText));
+  } catch (e) {
+    const err = new Error("La diagnosi non è stata generata correttamente.");
+    err.stopReason = response.stop_reason;
+    err.rawHead = rawText.slice(0, 200);
+    err.rawTail = rawText.slice(-200);
+    err.rawLen = rawText.length;
+    throw err;
+  }
+}
+
 app.post("/api/analyze", upload.single("file"), async (req, res) => {
   try {
     if (!process.env.ANTHROPIC_API_KEY) {
@@ -392,50 +431,16 @@ app.post("/api/analyze", upload.single("file"), async (req, res) => {
         .json({ error: "Fornisci almeno uno screenshot, un report o i dati di contesto." });
     }
 
-    const response = await client.messages.create({
-      model: "claude-opus-4-8",
-      max_tokens: 16000,
-      thinking: { type: "adaptive" },
-      output_config: {
-        effort: "medium",
-        format: { type: "json_schema", schema: DIAGNOSIS_SCHEMA },
-      },
-      system: SYSTEM_PROMPT,
-      messages: [{ role: "user", content }],
-    });
-
-    // Estrae il testo e lo ripulisce (eventuali fence ```json o testo attorno).
-    let raw = response.content
-      .filter((b) => b.type === "text")
-      .map((b) => b.text)
-      .join("")
-      .trim();
-    raw = raw.replace(/^```(?:json)?/i, "").replace(/```$/i, "").trim();
-    const firstBrace = raw.indexOf("{");
-    const lastBrace = raw.lastIndexOf("}");
-    const jsonStr = firstBrace >= 0 && lastBrace > firstBrace ? raw.slice(firstBrace, lastBrace + 1) : raw;
-
     let result;
     try {
-      result = JSON.parse(jsonStr);
+      result = await runDiagnosis(content);
     } catch (e) {
-      console.error(
-        "JSON parse fail. stop_reason:",
-        response.stop_reason,
-        "len:",
-        raw.length,
-        "head:",
-        raw.slice(0, 200),
-        "tail:",
-        raw.slice(-200)
-      );
-      const hint =
-        response.stop_reason === "max_tokens"
-          ? " (la risposta era troppo lunga: riprova, ho già aumentato il limite)"
-          : "";
-      return res.status(502).json({
-        error: "La diagnosi non è stata generata correttamente. Riprova tra poco." + hint,
-      });
+      if (e.rawHead !== undefined) {
+        console.error("JSON parse fail. stop_reason:", e.stopReason, "len:", e.rawLen, "head:", e.rawHead, "tail:", e.rawTail);
+        const hint = e.stopReason === "max_tokens" ? " (la risposta era troppo lunga: riprova)" : "";
+        return res.status(502).json({ error: e.message + " Riprova tra poco." + hint });
+      }
+      throw e;
     }
 
     res.json({ result });
@@ -447,6 +452,18 @@ app.post("/api/analyze", upload.single("file"), async (req, res) => {
         : err?.message || "Errore durante l'analisi.";
     res.status(err?.status || 500).json({ error: msg });
   }
+});
+
+// Endpoint del job notturno: lo chiama un cron esterno (cron-job.org) alle 00:30.
+// Protetto da CRON_SECRET. Risponde subito e lavora in background.
+app.get("/api/cron/run", (req, res) => {
+  if (!process.env.CRON_SECRET || req.query.key !== process.env.CRON_SECRET) {
+    return res.status(403).json({ error: "Accesso negato (chiave cron mancante o errata)." });
+  }
+  res.json({ status: "avviato", ts: new Date().toISOString() });
+  runNightly(runDiagnosis)
+    .then((s) => console.log("[nightly] completato:", JSON.stringify(s)))
+    .catch((e) => console.error("[nightly] errore fatale:", e?.message));
 });
 
 const PORT = process.env.PORT || 3000;
