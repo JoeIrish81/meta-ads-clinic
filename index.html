@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Meta Ads Clinic</title>
+<!-- ===================== META ADS CLINIC — WIDGET ===================== -->
+<!-- Versione di test locale: il backend è sullo stesso dominio (/api/analyze). -->
+<style>
+#mac-app {
+  --mac-navy: #1c3c5e;
+  --mac-navy-2: #15314d;
+  --mac-orange: #f26a21;
+  --mac-orange-light: #ff7d2e;
+  --mac-red: #e23812;
+  --mac-grad: linear-gradient(90deg, #ff7d2e 0%, #e23812 100%);
+  --mac-bg: #ffffff;
+  --mac-soft: #f6f7f9;
+  --mac-border: #e3e7ec;
+  --mac-text: #1f2630;
+  --mac-muted: #6b7785;
+  --mac-radius: 14px;
+  all: initial;
+  display: block;
+  font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  color: var(--mac-text);
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 16px;
+  box-sizing: border-box;
+}
+#mac-app *, #mac-app *::before, #mac-app *::after { box-sizing: border-box; }
+#mac-app .mac-head { text-align: center; padding: 8px 0 18px; }
+#mac-app .mac-logo { display: inline-flex; align-items: center; gap: 12px; }
+#mac-app .mac-logo svg { width: 60px; height: 36px; display: block; }
+#mac-app .mac-logo img { height: 42px; display: block; }
+#mac-app .mac-title { font-size: 26px; font-weight: 800; letter-spacing: .3px; }
+#mac-app .mac-title .o { color: var(--mac-orange); }
+#mac-app .mac-title .n { color: var(--mac-navy); }
+#mac-app .mac-sub { margin: 6px 0 0; color: var(--mac-muted); font-size: 15px; }
+
+#mac-app .mac-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+@media (max-width: 880px) { #mac-app .mac-grid { grid-template-columns: 1fr; } }
+
+#mac-app .mac-card {
+  background: var(--mac-bg);
+  border: 1px solid var(--mac-border);
+  border-radius: var(--mac-radius);
+  padding: 20px;
+  box-shadow: 0 2px 14px rgba(28,60,94,.05);
+}
+#mac-app h2 { font-size: 17px; margin: 0 0 14px; color: var(--mac-navy); }
+#mac-app h2 .step {
+  display: inline-grid; place-items: center; width: 22px; height: 22px;
+  background: var(--mac-grad); color: #fff; border-radius: 50%; font-size: 13px; margin-right: 8px;
+}
+#mac-app label { display: block; font-size: 13px; color: var(--mac-muted); margin: 12px 0 5px; font-weight: 600; }
+#mac-app input, #mac-app select, #mac-app textarea {
+  width: 100%; background: var(--mac-soft); border: 1px solid var(--mac-border);
+  border-radius: 9px; color: var(--mac-text); padding: 11px; font-size: 14px; font-family: inherit;
+}
+#mac-app textarea { resize: vertical; min-height: 70px; }
+#mac-app input:focus, #mac-app select:focus, #mac-app textarea:focus { outline: none; border-color: var(--mac-orange); }
+#mac-app .mac-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+#mac-app .mac-guide {
+  border: 1px solid var(--mac-border); border-radius: 11px; margin-bottom: 16px; overflow: hidden;
+}
+#mac-app .mac-guide > summary {
+  cursor: pointer; padding: 13px 15px; font-weight: 700; color: var(--mac-navy);
+  background: var(--mac-soft); list-style: none; display: flex; align-items: center; gap: 8px;
+}
+#mac-app .mac-guide > summary::-webkit-details-marker { display: none; }
+#mac-app .mac-guide > summary::before { content: "❔"; }
+#mac-app .mac-guide[open] > summary { border-bottom: 1px solid var(--mac-border); }
+#mac-app .mac-guide .mac-guide-body { padding: 14px 16px; font-size: 13.5px; }
+#mac-app .mac-guide h4 { margin: 14px 0 6px; font-size: 14px; color: var(--mac-orange); }
+#mac-app .mac-guide h4:first-child { margin-top: 0; }
+#mac-app .mac-guide ul { margin: 4px 0; padding-left: 18px; }
+#mac-app .mac-guide li { margin: 3px 0; }
+#mac-app .mac-guide code { background: var(--mac-soft); padding: 1px 6px; border-radius: 5px; font-size: 12.5px; border: 1px solid var(--mac-border); }
+#mac-app .mac-tag { display: inline-block; font-size: 11px; font-weight: 700; padding: 2px 7px; border-radius: 20px; }
+#mac-app .mac-tag.ok { background: #e6f6ec; color: #1f9d55; }
+#mac-app .mac-tag.no { background: #fdecea; color: var(--mac-red); }
+
+#mac-app .mac-drop {
+  margin-top: 6px; border: 1.5px dashed var(--mac-border); border-radius: 11px; padding: 18px;
+  text-align: center; color: var(--mac-muted); cursor: pointer; transition: border-color .15s, background .15s;
+}
+#mac-app .mac-drop:hover, #mac-app .mac-drop.over { border-color: var(--mac-orange); background: var(--mac-soft); }
+#mac-app .mac-drop strong { color: var(--mac-navy); }
+#mac-app .mac-chip {
+  margin-top: 10px; font-size: 13px; background: var(--mac-soft); border: 1px solid var(--mac-border);
+  border-radius: 8px; padding: 8px 11px; display: none; justify-content: space-between; align-items: center;
+}
+#mac-app .mac-chip button { background: none; border: none; color: var(--mac-muted); cursor: pointer; font-size: 16px; }
+#mac-app .mac-hint { font-size: 12px; color: var(--mac-muted); margin-top: 6px; }
+
+#mac-app .mac-go {
+  margin-top: 18px; width: 100%; background: var(--mac-grad); color: #fff; border: none;
+  border-radius: 10px; padding: 14px; font-size: 15px; font-weight: 700; cursor: pointer; letter-spacing: .2px;
+}
+#mac-app .mac-go:hover { filter: brightness(1.05); }
+#mac-app .mac-go:disabled { opacity: .6; cursor: default; }
+
+#mac-app .mac-result { min-height: 220px; }
+#mac-app .mac-placeholder { color: var(--mac-muted); font-size: 14px; }
+#mac-app .mac-md h2 { font-size: 18px; color: var(--mac-navy); margin: 16px 0 6px; }
+#mac-app .mac-md h3 { font-size: 15.5px; color: var(--mac-navy); margin: 16px 0 5px; }
+#mac-app .mac-md ul, #mac-app .mac-md ol { padding-left: 20px; margin: 6px 0; }
+#mac-app .mac-md li { margin: 3px 0; }
+#mac-app .mac-md p { margin: 8px 0; }
+#mac-app .mac-md strong { color: var(--mac-navy-2); }
+#mac-app .mac-md code { background: var(--mac-soft); padding: 1px 5px; border-radius: 5px; font-size: 13px; }
+#mac-app .mac-md pre { background: var(--mac-soft); padding: 12px; border-radius: 8px; overflow-x: auto; border: 1px solid var(--mac-border); }
+#mac-app .mac-spin {
+  display: inline-block; width: 15px; height: 15px; border: 2px solid rgba(242,106,33,.25);
+  border-top-color: var(--mac-orange); border-radius: 50%; animation: mac-spin .7s linear infinite; vertical-align: -2px; margin-right: 8px;
+}
+@keyframes mac-spin { to { transform: rotate(360deg); } }
+#mac-app .mac-err { color: var(--mac-red); font-size: 14px; }
+#mac-app .mac-foot { text-align: center; color: var(--mac-muted); font-size: 11.5px; margin-top: 14px; }
+</style>
+</head>
+<body>
+
+<div id="mac-app">
+  <div class="mac-head">
+    <div class="mac-logo">
+      <img id="mac-logo-img" alt="Meta Ads Clinic" style="display:none" />
+      <svg id="mac-logo-svg" viewBox="0 0 200 118" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <defs>
+          <linearGradient id="macg" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="#ff7d2e"/><stop offset="1" stop-color="#e23812"/>
+          </linearGradient>
+        </defs>
+        <!-- ala destra (navy) -->
+        <polygon points="186,16 104,16 112,30 194,30" fill="#1c3c5e"/>
+        <polygon points="168,38 104,38 112,52 176,52" fill="#1c3c5e"/>
+        <polygon points="150,60 104,60 112,74 158,74" fill="#1c3c5e"/>
+        <polygon points="134,76 118,76 80,104 96,104" fill="#1c3c5e"/>
+        <!-- ala sinistra (arancione) -->
+        <polygon points="14,16 96,16 88,30 6,30" fill="url(#macg)"/>
+        <polygon points="32,38 96,38 88,52 24,52" fill="url(#macg)"/>
+        <polygon points="50,60 96,60 88,74 42,74" fill="url(#macg)"/>
+        <polygon points="66,76 82,76 120,104 104,104" fill="url(#macg)"/>
+      </svg>
+      <div class="mac-title"><span class="o">Meta Ads</span> <span class="n">Clinic</span></div>
+    </div>
+    <p class="mac-sub">Carica lo screenshot o il report della tua campagna Meta e scopri cosa funziona, cosa no e cosa modificare.</p>
+  </div>
+
+  <div class="mac-grid">
+    <!-- INPUT -->
+    <form class="mac-card" id="mac-form">
+
+      <details class="mac-guide">
+        <summary>Come preparare i dati (leggi prima)</summary>
+        <div class="mac-guide-body">
+          <h4>1. Dove fare l'analisi in Meta</h4>
+          <ul>
+            <li><strong>Livello Inserzione</strong> (la sezione “creatività”): per giudicare <strong>visual, hook, copy, formato</strong>. Qui agisci se il problema è CTR / hook basso.</li>
+            <li><strong>Livello Gruppo di inserzioni</strong> (ad set): per giudicare <strong>pubblico, posizionamenti, budget, ottimizzazione</strong>. Qui agisci se il problema è copertura / CPM / consegna.</li>
+            <li><strong>Livello Campagna</strong>: visione d'insieme e strategia di budget.</li>
+            <li>👉 Per “cosa non va nella creatività” esporta/scatta a <strong>livello Inserzione</strong>; per “cosa non va nel pubblico/budget” a <strong>livello Gruppo di inserzioni</strong>.</li>
+          </ul>
+
+          <h4>2. Colonne da attivare (report o screenshot)</h4>
+          <ul>
+            <li><strong>Sempre:</strong> Importo speso · Risultati · Costo per risultato · Impressioni · Copertura · Frequenza · CPM · Click sul link · <code>CTR (click sul link in uscita)</code> · CPC (link)</li>
+            <li><strong>Vendite/conversioni:</strong> Acquisti/Lead · Costo per acquisto (CPA) · ROAS · Valore di conversione</li>
+            <li><strong>Video/creatività:</strong> Visualizzazioni 3 sec · ThruPlay · Hook rate (se disponibile)</li>
+            <li><strong>Qualità:</strong> Classifica di qualità / coinvolgimento / conversione</li>
+          </ul>
+
+          <h4>3. Report o Screenshot?</h4>
+          <ul>
+            <li><span class="mac-tag ok">REPORT</span> CSV/Excel: numeri esatti <strong>+ puoi includere i TESTI</strong> dell'annuncio → l'AI valuta anche hook e copy.</li>
+            <li><span class="mac-tag no">SCREENSHOT tabella</span> solo i numeri visibili, <strong>niente testi</strong> → l'AI valuta solo le metriche. Per far valutare la creatività, incolla i testi qui sotto o allega anche uno screenshot dell'<strong>anteprima</strong> dell'annuncio.</li>
+          </ul>
+        </div>
+      </details>
+
+      <h2><span class="step">1</span>Dati della campagna <span style="font-weight:400;color:var(--mac-muted);font-size:13px">(facoltativi)</span></h2>
+      <p style="margin:-6px 0 4px;font-size:12.5px;color:var(--mac-muted)">Puoi anche caricare solo il report: analizzo quello che c'è e, se manca qualcosa di importante (es. la città), te lo dico dopo averlo letto.</p>
+      <div class="mac-row">
+        <div>
+          <label>Città / area</label>
+          <input name="city" placeholder="Es. Milano e provincia" />
+        </div>
+        <div>
+          <label>Obiettivo campagna</label>
+          <select name="objective">
+            <option value="">— seleziona —</option>
+            <option>Notorietà / copertura</option>
+            <option>Traffico</option>
+            <option>Interazioni</option>
+            <option>Contatti / Lead</option>
+            <option>Messaggi (WhatsApp/DM)</option>
+            <option>Vendite / Conversioni</option>
+            <option>Vendite catalogo</option>
+          </select>
+        </div>
+      </div>
+      <div class="mac-row">
+        <div><label>Budget</label><input name="budget" placeholder="Es. 20€/giorno" /></div>
+        <div><label>Da quanto è attiva</label><input name="duration" placeholder="Es. 12 giorni" /></div>
+      </div>
+      <div class="mac-row">
+        <div><label>Settore / prodotto</label><input name="sector" placeholder="Es. ristorante, e-commerce scarpe" /></div>
+        <div><label>Ticket medio — quanto vale un cliente?</label><input name="ticket" placeholder="Es. 45€ a vendita / 600€ a cliente" /></div>
+      </div>
+      <label>Livello dei dati caricati</label>
+      <select name="level">
+        <option value="">— seleziona —</option>
+        <option>Inserzione (creatività)</option>
+        <option>Gruppo di inserzioni (ad set)</option>
+        <option>Campagna</option>
+      </select>
+      <label>Note aggiuntive (facoltativo)</label>
+      <textarea name="notes" placeholder="Qualsiasi contesto utile: offerta in corso, landing usata, target scelto, problemi noti... Non è obbligatorio: la diagnosi te la faccio io."></textarea>
+
+      <h2 style="margin-top:22px"><span class="step">2</span>Screenshot o report</h2>
+      <div class="mac-drop" id="mac-drop">
+        Trascina qui lo <strong>screenshot</strong> o un <strong>export CSV/Excel</strong><br />— oppure clicca per scegliere
+        <input type="file" id="mac-file" name="file" accept="image/*,.csv,.tsv,.txt,.json" hidden />
+      </div>
+      <div class="mac-chip" id="mac-chip"><span id="mac-chipname"></span><button type="button" id="mac-chipx">✕</button></div>
+      <div class="mac-hint">Il report CSV dà numeri esatti → analisi più precisa dello screenshot.</div>
+
+      <label style="margin-top:14px">Testi dell'annuncio / report incollato (facoltativo)</label>
+      <textarea name="report" placeholder="Incolla qui i numeri del report e/o i TESTI dell'annuncio (headline, copy, CTA) per farli valutare."></textarea>
+
+      <button class="mac-go" type="submit" id="mac-go">Analizza la campagna</button>
+    </form>
+
+    <!-- OUTPUT -->
+    <div class="mac-card">
+      <h2>Diagnosi</h2>
+      <div class="mac-result" id="mac-result">
+        <div class="mac-placeholder">Qui comparirà la diagnosi: cosa funziona 🟢, cosa no 🔴 e cosa fare, in ordine di priorità e a quale livello agire.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="mac-foot">Meta Ads Clinic — analisi assistita da AI. Le indicazioni sono di supporto, non sostituiscono il giudizio del media buyer.</div>
+</div>
+
+<script>
+(function () {
+  // ===== CONFIG =====
+  // backendUrl: URL del backend (vuoto = stesso dominio, per il test locale).
+  // logoUrl: incolla qui l'URL del TUO logo PNG per il match perfetto (vuoto = usa il logo SVG).
+  var CONFIG = { backendUrl: "", logoUrl: "" };
+  var ENDPOINT = (CONFIG.backendUrl || "") + "/api/analyze";
+
+  var $ = function (id) { return document.getElementById(id); };
+
+  // Se è impostato un logo personalizzato, usalo al posto dell'SVG.
+  if (CONFIG.logoUrl) {
+    var li = $("mac-logo-img"), ls = $("mac-logo-svg");
+    if (li && ls) { li.src = CONFIG.logoUrl; li.style.display = "block"; ls.style.display = "none"; }
+  }
+  var form = $("mac-form"), fileInput = $("mac-file"), drop = $("mac-drop");
+  var chip = $("mac-chip"), chipName = $("mac-chipname"), result = $("mac-result"), go = $("mac-go");
+
+  drop.addEventListener("click", function () { fileInput.click(); });
+  ["dragover", "dragenter"].forEach(function (e) {
+    drop.addEventListener(e, function (ev) { ev.preventDefault(); drop.classList.add("over"); });
+  });
+  ["dragleave", "drop"].forEach(function (e) {
+    drop.addEventListener(e, function (ev) { ev.preventDefault(); drop.classList.remove("over"); });
+  });
+  drop.addEventListener("drop", function (ev) {
+    if (ev.dataTransfer.files.length) { fileInput.files = ev.dataTransfer.files; showFile(); }
+  });
+  fileInput.addEventListener("change", showFile);
+  $("mac-chipx").addEventListener("click", function () { fileInput.value = ""; chip.style.display = "none"; });
+  function showFile() {
+    if (fileInput.files.length) { chipName.textContent = "📎 " + fileInput.files[0].name; chip.style.display = "flex"; }
+  }
+
+  // Mini-renderer Markdown (sottoinsieme: titoli, grassetto, liste, codice)
+  function renderMd(src) {
+    var lines = String(src).split("\n"), out = [], list = null;
+    function closeList() { if (list) { out.push("</" + list + ">"); list = null; } }
+    var inline = function (t) {
+      return t
+        .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+        .replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>")
+        .replace(/`([^`]+)`/g, "<code>$1</code>");
+    };
+    for (var i = 0; i < lines.length; i++) {
+      var l = lines[i].replace(/\s+$/, "");
+      if (/^###\s+/.test(l)) { closeList(); out.push("<h3>" + inline(l.replace(/^###\s+/, "")) + "</h3>"); }
+      else if (/^##\s+/.test(l)) { closeList(); out.push("<h2>" + inline(l.replace(/^##\s+/, "")) + "</h2>"); }
+      else if (/^#\s+/.test(l)) { closeList(); out.push("<h2>" + inline(l.replace(/^#\s+/, "")) + "</h2>"); }
+      else if (/^\s*[-*]\s+/.test(l)) {
+        if (list !== "ul") { closeList(); out.push("<ul>"); list = "ul"; }
+        out.push("<li>" + inline(l.replace(/^\s*[-*]\s+/, "")) + "</li>");
+      }
+      else if (/^\s*\d+[.)]\s+/.test(l)) {
+        if (list !== "ol") { closeList(); out.push("<ol>"); list = "ol"; }
+        out.push("<li>" + inline(l.replace(/^\s*\d+[.)]\s+/, "")) + "</li>");
+      }
+      else if (l.trim() === "") { closeList(); }
+      else { closeList(); out.push("<p>" + inline(l) + "</p>"); }
+    }
+    closeList();
+    return out.join("");
+  }
+
+  form.addEventListener("submit", function (e) {
+    e.preventDefault();
+    go.disabled = true;
+    go.innerHTML = '<span class="mac-spin"></span>Analisi in corso…';
+    result.innerHTML = '<div class="mac-placeholder"><span class="mac-spin"></span>Sto leggendo i dati e preparando i consigli…</div>';
+
+    var fd = new FormData(form);
+    fetch(ENDPOINT, { method: "POST", body: fd })
+      .then(function (res) { return res.json().then(function (d) { return { ok: res.ok, d: d }; }); })
+      .then(function (r) {
+        if (!r.ok) throw new Error(r.d.error || "Errore");
+        result.innerHTML = '<div class="mac-md">' + renderMd(r.d.analysis) + "</div>";
+      })
+      .catch(function (err) {
+        var msg = (err && err.message) ? err.message : "Errore";
+        if (/fetch|networkerror|load failed|failed to fetch/i.test(msg)) {
+          msg = "Non riesco a raggiungere il motore di analisi. Verifica che il backend sia online e che l'indirizzo sia corretto. (In locale: avvia <code>npm start</code> e apri http://localhost:3000)";
+        }
+        result.innerHTML = '<div class="mac-err">⚠️ ' + msg + "</div>";
+      })
+      .then(function () { go.disabled = false; go.textContent = "Analizza la campagna"; });
+  });
+})();
+</script>
+</body>
+</html>
