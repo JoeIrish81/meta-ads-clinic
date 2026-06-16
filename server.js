@@ -23,7 +23,8 @@ app.use((req, res, next) => {
   next();
 });
 
-app.use(express.static(join(__dirname, "public")));
+// Serve la pagina del widget (index.html nella stessa cartella del server).
+app.get("/", (req, res) => res.sendFile(join(__dirname, "index.html")));
 
 // Formati immagine accettati dall'API vision
 const IMAGE_TYPES = {
