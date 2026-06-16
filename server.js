@@ -102,7 +102,8 @@ const SYSTEM_PROMPT = `Sei "Meta Ads Clinic", il medico delle campagne Meta Ads 
    - 5–7 = "giallo": funziona ma ha problemi concreti da sistemare.
    - 2–4 = "rosso": in difficoltà seria / spreco di budget / nessun risultato utile.
    - 0–1 = "rosso": gravemente compromessa.
-   Coerenza obbligatoria: se c'è ≥1 intervento "rosso", la salute è "rosso" e il voto ≤4. Se gli interventi sono solo "giallo", voto 5–7. Se è tutto buono, voto 8–10. Scegli il numero PRECISO in base a quanti/quanto gravi sono i problemi: due problemi rossi pesano più di uno. Evita il 6 "di default".
+   Coerenza obbligatoria: se c'è ≥1 intervento "rosso", la salute è "rosso" e il voto ≤4. Se gli interventi sono solo "giallo", voto 5–7. Se è tutto buono, voto 8–10.
+   METODO DI CALCOLO (applicalo, non dare voti a caso): parti da 10 e sottrai 3 per ogni intervento "rosso" e 1,5 per ogni "giallo"; arrotonda all'intero; minimo 1, massimo 10. Così il voto VARIA tra campagne diverse. È VIETATO dare sempre 6: se ti viene 6, ricontrolla quanti problemi reali ci sono.
 - "quadro_generale": 2–3 frasi da medico sullo stato di salute complessivo.
 - "problema_principale": UNA frase, il problema n.1 da curare subito.
 - "metriche": i NUMERI CHIAVE letti dal report, da mostrare all'utente come "cartella clinica". Includi tutto ciò che è presente nei dati, ad esempio:
@@ -113,6 +114,17 @@ const SYSTEM_PROMPT = `Sei "Meta Ads Clinic", il medico delle campagne Meta Ads 
    - Titolo/i principali dell'annuncio se presenti → stato "neutro".
    - Città / aree più performanti se c'è un breakdown geografico (es. "Milano 12 lead, Roma 8") → stato in base al rendimento.
    Per ogni metrica: label breve, valore con unità (es. "1.560 clic", "9,40€", "32%"), stato "verde"|"giallo"|"rosso"|"neutro". Non inventare: metti solo ciò che è nei dati.
+- "rilevati": i dati di contesto che riesci a DEDURRE dal report/file, da pre-compilare nel form. Campi (stringa vuota "" se non deducibile):
+   - "budget": budget rilevato (es. "270€/giorno" o "≈ 1.900€ in 7 giorni").
+   - "durata": da quanto è attiva / periodo coperto (es. "8–14 giu 2026 (7 giorni)").
+   - "obiettivo": prova a dedurre il tipo (es. "Contatti/Lead — Modulo Facebook", "Vendite/Conversioni", "Traffico"). Se incerto, "".
+   - "citta": area geografica se deducibile, altrimenti "".
+   - "settore": settore/prodotto se deducibile, altrimenti "".
+- "dispersione": stima del budget "disperso" = spesa finita su inserzioni/segmenti/posizionamenti con risultati nulli o molto costosi rispetto agli altri. PESA per SPESA e TEMPO (non per numero di ads). Campi:
+   - "valore": € e % sul totale (es. "≈ 320€ (11% della spesa)"). Se NON calcolabile (solo dato aggregato, niente dettaglio per inserzione/segmento) → "non calcolabile".
+   - "giudizio": "verde" (fisiologica), "giallo" (alta), "rosso" (grave spreco), "neutro" (non calcolabile). Regola pratica: in fase di test/apprendimento una dispersione fino a ~10–15% della spesa è normale; oltre è un problema. Rapporta SEMPRE alla spesa totale (disperdere 200€ su 30.000€ è normale; su 600€ è grave).
+   - "commento": 1–2 frasi: è accettabile o no, e perché (considera apprendimento e spesa totale). Se "non calcolabile", spiega che serve l'export a livello Inserzione.
+- "grafici": SOLO se nei dati ci sono dei BREAKDOWN (per genere, età, posizionamento, dispositivo, o per singola inserzione). Crea grafici a barre per i confronti utili, es. "CPL per genere" (Uomini/Donne), "Lead per età", "CPL per inserzione". Ogni grafico: "titolo", "unita" ("€"|"lead"|"%"|...), "voci" = lista di { label, valore (NUMERO puro, senza simboli), nota (breve, anche "") }. Se NON ci sono breakdown nei dati, lascia "grafici" VUOTO (non inventarli).
 - "ads": se il file contiene le SINGOLE inserzioni (righe per inserzione) e una colonna di stato/recapito (es. "Recapito", "Stato": Attiva / Disattivata / In pausa / Bozza), elenca le inserzioni più rilevanti (le migliori e le peggiori). Per ognuna:
    - "nome": il nome dell'inserzione.
    - "stato": "attiva" | "non attiva" | "sconosciuto" (in base alla colonna; se non c'è la colonna stato, "sconosciuto").
@@ -127,10 +139,10 @@ const SYSTEM_PROMPT = `Sei "Meta Ads Clinic", il medico delle campagne Meta Ads 
    - "diagnosi": sintomo + causa probabile, col numero che lo dimostra.
    - "azione": COSA FARE, concreto e da medico. Esempi: "Metti in pausa l'inserzione X (CPL 18€, doppio della media)", "Rinnova il visual e testa 2 nuovi hook", "Sposta il 60% del budget sull'inserzione Y che converte", "Restringi il pubblico / escludi i 18–24".
    - "dove": livello + punto preciso (es. "livello Inserzione → creatività", "livello Gruppo di inserzioni → pubblico", "Landing page").
-- "azioni_urgenti": 2–4 cose da fare SUBITO, brevissime e operative (es. "Refresh creativo sull'inserzione con frequenza 4,2", "Metti in pausa l'ad con CPL 18€").
+- "azioni_urgenti": 2–4 cose da fare SUBITO, brevissime e operative. Includi, quando i dati lo indicano: mettere in pausa un'inserzione che spreca; RIATTIVARE un'inserzione spenta che però rendeva meglio (in base ai numeri); TESTARE 1–2 nuove creatività/varianti se quelle attive sono sature (frequenza alta). Es.: "Riattiva 'Video offerta' (era a CPL 6€, oggi spendi su una a 14€)", "Metti in pausa l'ad con CPL 18€", "Testa 2 nuovi hook sull'inserzione con frequenza 4,2".
 - "cosa_serve": SOLO i dati davvero mancanti e non deducibili (es. città, ticket medio, obiettivo). Per ciascuno UNA riga col perché serve. Se non manca nulla, lascia vuoto.
 
-Sii sintetico: frasi brevi, niente muri di testo. L'utente deve capire al volo dove intervenire e cosa fare.`;
+Sii sintetico: frasi brevi, niente muri di testo. LINGUAGGIO SEMPLICE, per chi NON è esperto di advertising: evita gergo inutile e, se usi una sigla, spiegala in due parole la prima volta (es. "CPL = costo per contatto", "frequenza = quante volte la stessa persona ha visto l'annuncio"). L'utente deve capire al volo lo stato della campagna, dove intervenire e cosa fare.`;
 
 // Schema della diagnosi (structured output) — il modello deve restituire questo JSON.
 const DIAGNOSIS_SCHEMA = {
@@ -143,6 +155,53 @@ const DIAGNOSIS_SCHEMA = {
     voto: { type: "integer" },
     quadro_generale: { type: "string" },
     problema_principale: { type: "string" },
+    rilevati: {
+      type: "object",
+      additionalProperties: false,
+      properties: {
+        budget: { type: "string" },
+        durata: { type: "string" },
+        obiettivo: { type: "string" },
+        citta: { type: "string" },
+        settore: { type: "string" },
+      },
+      required: ["budget", "durata", "obiettivo", "citta", "settore"],
+    },
+    dispersione: {
+      type: "object",
+      additionalProperties: false,
+      properties: {
+        valore: { type: "string" },
+        giudizio: { type: "string", enum: ["verde", "giallo", "rosso", "neutro"] },
+        commento: { type: "string" },
+      },
+      required: ["valore", "giudizio", "commento"],
+    },
+    grafici: {
+      type: "array",
+      items: {
+        type: "object",
+        additionalProperties: false,
+        properties: {
+          titolo: { type: "string" },
+          unita: { type: "string" },
+          voci: {
+            type: "array",
+            items: {
+              type: "object",
+              additionalProperties: false,
+              properties: {
+                label: { type: "string" },
+                valore: { type: "number" },
+                nota: { type: "string" },
+              },
+              required: ["label", "valore", "nota"],
+            },
+          },
+        },
+        required: ["titolo", "unita", "voci"],
+      },
+    },
     metriche: {
       type: "array",
       items: {
@@ -197,6 +256,9 @@ const DIAGNOSIS_SCHEMA = {
     "voto",
     "quadro_generale",
     "problema_principale",
+    "rilevati",
+    "dispersione",
+    "grafici",
     "metriche",
     "ads",
     "cosa_funziona",

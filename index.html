@@ -64,11 +64,10 @@
 
 #mac-app .mac-guide { border: 1px solid var(--mac-border); border-radius: 11px; margin-bottom: 16px; overflow: hidden; }
 #mac-app .mac-guide > summary {
-  cursor: pointer; padding: 13px 15px; font-weight: 700; color: var(--mac-navy);
-  background: var(--mac-soft); list-style: none; display: flex; align-items: center; gap: 8px;
+  cursor: pointer; padding: 13px 15px; font-weight: 700; color: var(--mac-orange);
+  background: #fff3ec; list-style: none; display: flex; align-items: center; gap: 8px;
 }
 #mac-app .mac-guide > summary::-webkit-details-marker { display: none; }
-#mac-app .mac-guide > summary::before { content: "❔"; }
 #mac-app .mac-guide[open] > summary { border-bottom: 1px solid var(--mac-border); }
 #mac-app .mac-guide .mac-guide-body { padding: 14px 16px; font-size: 13.5px; }
 #mac-app .mac-guide h4 { margin: 14px 0 6px; font-size: 14px; color: var(--mac-orange); }
@@ -184,6 +183,31 @@
 #mac-app .d-need ul { margin: 0; padding-left: 18px; }
 #mac-app .d-need li { font-size: 13px; margin: 3px 0; }
 
+#mac-app .d-disp { border-radius: 11px; padding: 12px 14px; margin: 8px 0 14px; border: 1px solid var(--mac-border); }
+#mac-app .d-disp.verde { background: #eafaf0; border-color: #bfe8cd; }
+#mac-app .d-disp.giallo { background: #fff6e0; border-color: #f3d98a; }
+#mac-app .d-disp.rosso { background: #fdecea; border-color: #f3b4a8; }
+#mac-app .d-disp.neutro { background: var(--mac-soft); }
+#mac-app .d-disp-h { font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: .4px; color: var(--mac-navy); }
+#mac-app .d-disp-v { font-size: 20px; font-weight: 800; color: var(--mac-navy); margin: 2px 0; }
+#mac-app .d-disp-c { font-size: 12.5px; color: var(--mac-text); }
+
+#mac-app .d-chart { border: 1px solid var(--mac-border); border-radius: 10px; padding: 11px 13px; margin-bottom: 10px; }
+#mac-app .d-chart-t { font-size: 13px; font-weight: 700; color: var(--mac-navy); margin-bottom: 9px; }
+#mac-app .d-chart-t span { color: var(--mac-muted); font-weight: 600; font-size: 12px; }
+#mac-app .d-bar-row { display: grid; grid-template-columns: 96px 1fr 58px; align-items: center; gap: 9px; margin: 6px 0; }
+#mac-app .d-bar-l { font-size: 12px; color: var(--mac-text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#mac-app .d-bar-track { background: var(--mac-soft); border-radius: 6px; height: 15px; overflow: hidden; }
+#mac-app .d-bar-fill { height: 100%; background: var(--mac-grad); border-radius: 6px; min-width: 2px; transition: width .4s; }
+#mac-app .d-bar-v { font-size: 12px; font-weight: 700; color: var(--mac-navy); text-align: right; }
+
+#mac-app .mac-extra { margin-top: 14px; border: 1px solid var(--mac-border); border-radius: 11px; overflow: hidden; }
+#mac-app .mac-extra > summary { cursor: pointer; padding: 11px 14px; font-weight: 600; color: var(--mac-navy); background: var(--mac-soft); list-style: none; font-size: 13.5px; }
+#mac-app .mac-extra > summary::-webkit-details-marker { display: none; }
+#mac-app .mac-extra > summary::before { content: "➕ "; }
+#mac-app .mac-extra[open] > summary::before { content: "➖ "; }
+#mac-app .mac-extra .mac-extra-body { padding: 12px 14px; }
+
 #mac-app .mac-foot { text-align: center; color: var(--mac-muted); font-size: 11.5px; margin-top: 14px; }
 </style>
 </head>
@@ -199,8 +223,8 @@
   <div class="mac-grid">
     <!-- INPUT -->
     <form class="mac-card" id="mac-form">
-      <details class="mac-guide">
-        <summary>Come preparare i dati (leggi prima)</summary>
+      <details class="mac-guide" open>
+        <summary>📋 Come preparare i dati (leggi prima)</summary>
         <div class="mac-guide-body">
           <h4>1. Dove fare l'analisi in Meta</h4>
           <ul>
@@ -231,13 +255,34 @@
           <label>Obiettivo campagna</label>
           <select name="objective">
             <option value="">— seleziona —</option>
-            <option>Notorietà / copertura</option>
-            <option>Traffico</option>
-            <option>Interazioni</option>
-            <option>Contatti / Lead</option>
-            <option>Messaggi (WhatsApp/DM)</option>
-            <option>Vendite / Conversioni</option>
-            <option>Vendite catalogo</option>
+            <optgroup label="Notorietà">
+              <option>Notorietà del brand / Copertura</option>
+            </optgroup>
+            <optgroup label="Traffico">
+              <option>Traffico al sito</option>
+              <option>Traffico a profilo / pagina</option>
+            </optgroup>
+            <optgroup label="Interazioni">
+              <option>Interazioni con il post</option>
+              <option>Visualizzazioni video</option>
+            </optgroup>
+            <optgroup label="Contatti / Lead">
+              <option>Lead — Modulo istantaneo (Facebook)</option>
+              <option>Lead — Sito esterno</option>
+              <option>Lead — Chiamata</option>
+            </optgroup>
+            <optgroup label="Messaggi">
+              <option>Messaggi WhatsApp</option>
+              <option>Messaggi Messenger / Instagram</option>
+            </optgroup>
+            <optgroup label="Vendite">
+              <option>Vendite / Conversioni (sito)</option>
+              <option>Vendite catalogo (DPA)</option>
+              <option>Vendite — Negozio fisico</option>
+            </optgroup>
+            <optgroup label="App">
+              <option>Installazioni / eventi app</option>
+            </optgroup>
           </select>
         </div>
       </div>
@@ -260,8 +305,13 @@
       <div class="mac-chip" id="mac-chip"><span id="mac-chipname"></span><button type="button" id="mac-chipx">✕</button></div>
       <div class="mac-hint">Il report CSV/Excel dà numeri esatti → diagnosi più precisa.</div>
 
-      <label style="margin-top:14px">Testi dell'annuncio / report incollato (facoltativo)</label>
-      <textarea name="report" placeholder="Incolla qui i numeri del report e/o i TESTI dell'annuncio (headline, copy, CTA) per farli valutare."></textarea>
+      <details class="mac-extra">
+        <summary>Vuoi un parere sul testo dell'annuncio? (facoltativo)</summary>
+        <div class="mac-extra-body">
+          <p class="mac-hint" style="margin:0 0 8px">Non serve per i numeri. Solo se vuoi un parere sul <strong>copy</strong>, incolla qui il testo di <strong>1–2 annunci</strong> (titolo + testo + CTA). Non esportare tutto: bastano pochi esempi.</p>
+          <textarea name="report" placeholder="Es. Titolo: ... — Testo: ... — CTA: Scopri di più"></textarea>
+        </div>
+      </details>
 
       <button class="mac-go" type="submit" id="mac-go">Analizza la campagna</button>
     </form>
@@ -300,13 +350,50 @@
 
   function esc(s) { return String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
 
-  // Render della diagnosi a riquadri
+  var sev = function (g) { return (g === "rosso" || g === "giallo" || g === "verde") ? g : "giallo"; };
+  var sev4 = function (g) { return (["verde", "giallo", "rosso", "neutro"].indexOf(g) >= 0) ? g : "neutro"; };
+  function fmt(v) { var n = Number(v); if (!isFinite(n)) return String(v); var r = Math.round(n * 100) / 100; return String(r).replace(".", ","); }
+
+  // Pre-compila i campi del form con i dati rilevati dal report (solo se vuoti)
+  function fillForm(r) {
+    if (!r) return;
+    function set(name, val) { if (!val) return; var el = form.querySelector('[name="' + name + '"]'); if (el && !el.value) el.value = val; }
+    set("budget", r.budget); set("duration", r.durata); set("city", r.citta); set("sector", r.settore);
+    if (r.obiettivo) {
+      var sel = form.querySelector('[name="objective"]');
+      if (sel && !sel.value) {
+        var ob = String(r.obiettivo).toLowerCase();
+        for (var i = 0; i < sel.options.length; i++) {
+          var t = sel.options[i].text.toLowerCase();
+          if (t && t !== "— seleziona —" && (t.indexOf(ob) >= 0 || ob.indexOf(t) >= 0)) { sel.selectedIndex = i; break; }
+        }
+      }
+    }
+  }
+
+  function chartHtml(ch) {
+    if (!ch.voci || !ch.voci.length) return "";
+    var max = 0;
+    ch.voci.forEach(function (v) { var a = Math.abs(Number(v.valore) || 0); if (a > max) max = a; });
+    if (max <= 0) max = 1;
+    var h = '<div class="d-chart"><div class="d-chart-t">' + esc(ch.titolo) + (ch.unita ? ' <span>(' + esc(ch.unita) + ')</span>' : "") + '</div>';
+    ch.voci.forEach(function (v) {
+      var val = Number(v.valore) || 0, pct = Math.round(Math.abs(val) / max * 100);
+      h += '<div class="d-bar-row"><div class="d-bar-l" title="' + esc(v.label) + '">' + esc(v.label) + '</div>';
+      h += '<div class="d-bar-track"><div class="d-bar-fill" style="width:' + pct + '%"></div></div>';
+      h += '<div class="d-bar-v">' + esc(fmt(val)) + '</div></div>';
+    });
+    return h + '</div>';
+  }
+
+  // Render della diagnosi
   function renderDiagnosis(d) {
-    var sev = function (g) { return (g === "rosso" || g === "giallo" || g === "verde") ? g : "giallo"; };
+    fillForm(d.rilevati);
     var stateLabel = { verde: "In salute", giallo: "Da sistemare", rosso: "Critica" };
     var salute = sev(d.salute);
     var html = "";
 
+    // 1) Stato di salute + voto
     html += '<div class="d-top ' + salute + '">';
     html += '<div class="d-score">' + esc(d.voto) + '<small>/10</small></div>';
     html += '<div><div class="d-state">' + (stateLabel[salute] || "") + '</div>';
@@ -319,23 +406,20 @@
 
     if (d.problema_principale) html += '<div class="d-problem"><b>⚠️ Problema n.1:</b> ' + esc(d.problema_principale) + '</div>';
 
-    if (d.metriche && d.metriche.length) {
-      html += '<div class="d-section">📊 Numeri chiave dal report</div><div class="d-metrics">';
-      d.metriche.forEach(function (m) {
-        var st = (["verde", "giallo", "rosso", "neutro"].indexOf(m.stato) >= 0) ? m.stato : "neutro";
-        html += '<div class="d-metric ' + st + '"><div class="d-ml">' + esc(m.label) + '</div><div class="d-mv">' + esc(m.valore) + '</div></div>';
-      });
-      html += '</div>';
+    // 2) Cosa fare subito (in alto, è ciò che conta)
+    if (d.azioni_urgenti && d.azioni_urgenti.length) {
+      html += '<div class="d-section">⚡ Cosa fare subito</div>';
+      html += '<div class="d-urgent"><ul>';
+      d.azioni_urgenti.forEach(function (a) { html += '<li>' + esc(a) + '</li>'; });
+      html += '</ul></div>';
     }
 
+    // 3) Le tue inserzioni: attive / non attive
     if (d.ads && d.ads.length) {
       html += '<div class="d-section">🗂 Le tue inserzioni</div><div class="d-ads">';
-      var groups = [
-        { key: "attiva", label: "✅ Attive", cls: "attive" },
-        { key: "non attiva", label: "⏸ Non attive", cls: "inattive" },
-        { key: "sconosciuto", label: "🗂 Inserzioni", cls: "inattive" },
-      ];
-      groups.forEach(function (grp) {
+      [{ key: "attiva", label: "✅ Attive", cls: "attive" },
+       { key: "non attiva", label: "⏸ Spente", cls: "inattive" },
+       { key: "sconosciuto", label: "🗂 Inserzioni", cls: "inattive" }].forEach(function (grp) {
         var list = d.ads.filter(function (a) { return a.stato === grp.key; });
         if (!list.length) return;
         html += '<div class="d-adgroup ' + grp.cls + '"><div class="d-adgroup-title">' + grp.label + ' (' + list.length + ')</div>';
@@ -350,8 +434,33 @@
       html += '</div>';
     }
 
+    // 4) Grafici per segmento
+    if (d.grafici && d.grafici.length) {
+      html += '<div class="d-section">📈 Segmenti & confronti</div>';
+      d.grafici.forEach(function (ch) { html += chartHtml(ch); });
+    }
+
+    // 5) Numeri chiave
+    if (d.metriche && d.metriche.length) {
+      html += '<div class="d-section">📊 Numeri chiave</div><div class="d-metrics">';
+      d.metriche.forEach(function (m) {
+        html += '<div class="d-metric ' + sev4(m.stato) + '"><div class="d-ml">' + esc(m.label) + '</div><div class="d-mv">' + esc(m.valore) + '</div></div>';
+      });
+      html += '</div>';
+    }
+
+    // 6) Dispersione budget
+    if (d.dispersione && d.dispersione.valore) {
+      var dg = sev4(d.dispersione.giudizio);
+      html += '<div class="d-disp ' + dg + '"><div class="d-disp-h">💸 Dispersione del budget</div>';
+      html += '<div class="d-disp-v">' + esc(d.dispersione.valore) + '</div>';
+      if (d.dispersione.commento) html += '<div class="d-disp-c">' + esc(d.dispersione.commento) + '</div>';
+      html += '</div>';
+    }
+
+    // 7) Dove intervenire (dettaglio per area)
     if (d.interventi && d.interventi.length) {
-      html += '<div class="d-section">🔍 Dove intervenire</div><div class="d-boxes">';
+      html += '<div class="d-section">🔍 Dove intervenire (dettaglio)</div><div class="d-boxes">';
       d.interventi.forEach(function (it) {
         var g = sev(it.gravita);
         html += '<div class="d-box ' + g + '">';
@@ -364,26 +473,21 @@
       html += '</div>';
     }
 
+    // 8) Cosa funziona
     if (d.cosa_funziona && d.cosa_funziona.length) {
       html += '<div class="d-section">🟢 Cosa funziona</div><div class="d-good">';
       d.cosa_funziona.forEach(function (c) { html += '<span>' + esc(c) + '</span>'; });
       html += '</div>';
     }
 
-    if (d.azioni_urgenti && d.azioni_urgenti.length) {
-      html += '<div class="d-section">⚡ Cosa fare subito</div>';
-      html += '<div class="d-urgent"><div class="d-uh">Le mosse prioritarie, in ordine</div><ul>';
-      d.azioni_urgenti.forEach(function (a) { html += '<li>' + esc(a) + '</li>'; });
-      html += '</ul></div>';
-    }
-
+    // 9) Cosa serve
     if (d.cosa_serve && d.cosa_serve.length) {
       html += '<div class="d-need"><div class="d-nh">❓ Per una diagnosi ancora più precisa, aggiungi:</div><ul>';
       d.cosa_serve.forEach(function (c) { html += '<li>' + esc(c) + '</li>'; });
       html += '</ul></div>';
     }
 
-    html += '<div class="d-refresh">💡 Hai aggiunto un dato (es. il <b>ticket medio</b>)? Modifica i campi qui sopra e premi di nuovo <b>«Analizza la campagna»</b>: il file resta caricato, non devi ricaricarlo.</div>';
+    html += '<div class="d-refresh">💡 Hai aggiunto o corretto un dato qui sopra? Premi di nuovo <b>«Analizza la campagna»</b>: il file resta caricato, non devi ricaricarlo.</div>';
 
     result.innerHTML = html;
   }
