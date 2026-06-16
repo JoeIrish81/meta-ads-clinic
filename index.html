@@ -138,6 +138,20 @@
 
 #mac-app .d-section { font-size: 13px; font-weight: 800; color: var(--mac-navy); text-transform: uppercase; letter-spacing: .4px; margin: 18px 0 10px; }
 
+#mac-app .d-ads { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+@media (max-width: 620px) { #mac-app .d-ads { grid-template-columns: 1fr; } }
+#mac-app .d-adgroup-title { font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: .4px; margin-bottom: 8px; }
+#mac-app .d-adgroup.attive .d-adgroup-title { color: var(--mac-green); }
+#mac-app .d-adgroup.inattive .d-adgroup-title { color: var(--mac-muted); }
+#mac-app .d-ad { border: 1px solid var(--mac-border); border-left: 4px solid var(--mac-border); border-radius: 9px; padding: 9px 11px; margin-bottom: 8px; background: #fff; }
+#mac-app .d-ad.rosso { border-left-color: var(--mac-red); }
+#mac-app .d-ad.giallo { border-left-color: var(--mac-yellow); }
+#mac-app .d-ad.verde { border-left-color: var(--mac-green); }
+#mac-app .d-ad .d-an { font-weight: 700; font-size: 13px; color: var(--mac-navy); }
+#mac-app .d-ad .d-anote { font-size: 12px; color: var(--mac-muted); margin: 2px 0 5px; }
+#mac-app .d-ad .d-aact { font-size: 12.5px; background: var(--mac-soft); border-radius: 7px; padding: 5px 8px; }
+#mac-app .d-ad .d-aact b { color: var(--mac-orange); }
+
 #mac-app .d-boxes { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 @media (max-width: 620px) { #mac-app .d-boxes { grid-template-columns: 1fr; } }
 #mac-app .d-box { border: 1px solid var(--mac-border); border-left-width: 5px; border-radius: 10px; padding: 12px 13px; background: #fff; }
@@ -310,6 +324,28 @@
       d.metriche.forEach(function (m) {
         var st = (["verde", "giallo", "rosso", "neutro"].indexOf(m.stato) >= 0) ? m.stato : "neutro";
         html += '<div class="d-metric ' + st + '"><div class="d-ml">' + esc(m.label) + '</div><div class="d-mv">' + esc(m.valore) + '</div></div>';
+      });
+      html += '</div>';
+    }
+
+    if (d.ads && d.ads.length) {
+      html += '<div class="d-section">🗂 Le tue inserzioni</div><div class="d-ads">';
+      var groups = [
+        { key: "attiva", label: "✅ Attive", cls: "attive" },
+        { key: "non attiva", label: "⏸ Non attive", cls: "inattive" },
+        { key: "sconosciuto", label: "🗂 Inserzioni", cls: "inattive" },
+      ];
+      groups.forEach(function (grp) {
+        var list = d.ads.filter(function (a) { return a.stato === grp.key; });
+        if (!list.length) return;
+        html += '<div class="d-adgroup ' + grp.cls + '"><div class="d-adgroup-title">' + grp.label + ' (' + list.length + ')</div>';
+        list.forEach(function (a) {
+          var g = sev(a.giudizio);
+          html += '<div class="d-ad ' + g + '"><div class="d-an">' + esc(a.nome) + '</div>';
+          if (a.nota) html += '<div class="d-anote">' + esc(a.nota) + '</div>';
+          html += '<div class="d-aact"><b>→</b> ' + esc(a.azione) + '</div></div>';
+        });
+        html += '</div>';
       });
       html += '</div>';
     }

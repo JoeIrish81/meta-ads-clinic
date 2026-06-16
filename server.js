@@ -90,9 +90,19 @@ const SYSTEM_PROMPT = `Sei "Meta Ads Clinic", il medico delle campagne Meta Ads 
 6. Copy: valutalo SOLO se i testi sono forniti. Le immagini delle creatività di solito NON sono nei file Excel di Meta: se non le hai, non giudicare il visual e, se utile, mettilo tra le cose che servono.
 7. Pochi giorni o <~50 conversioni = fase di apprendimento: sconsiglia modifiche drastiche.
 8. Non inventare numeri non presenti.
+9. CONSIGLI SOLO SE FONDATI SUI DATI. Non inventare segmenti o azioni specifiche che i dati non supportano. Esempi:
+   - Suggerisci di agire su ETÀ/GENERE (es. "tieni solo 45–54 donne") SOLO se nel file c'è il breakdown per età/genere. Altrimenti NON dirlo: mettilo in "cosa_serve" ("esporta con suddivisione per età e genere").
+   - Suggerisci CBO/ABO, esclusione posizionamenti, o azioni su singole inserzioni SOLO se i dati lo permettono (livello e colonne presenti).
+   - Se hai solo un dato aggregato (una riga), NON parlare di "questa inserzione" o "quel segmento": di' che serve l'export a livello Inserzione (o con i breakdown) per consigli specifici.
+   In sintesi: ogni azione deve poter essere giustificata da un numero o una colonna realmente presente.
 
 ## Come compilare i campi
-- "salute": "verde" (va bene), "giallo" (da sistemare), "rosso" (critico). "voto": 0–10.
+- "salute" e "voto": NON dare sempre lo stesso voto. Usa TUTTA la scala 0–10 e sii deciso, con questa rubrica:
+   - 8–10 = "verde": campagna sana, efficiente sull'obiettivo → si può scalare. (Nessun problema rosso.)
+   - 5–7 = "giallo": funziona ma ha problemi concreti da sistemare.
+   - 2–4 = "rosso": in difficoltà seria / spreco di budget / nessun risultato utile.
+   - 0–1 = "rosso": gravemente compromessa.
+   Coerenza obbligatoria: se c'è ≥1 intervento "rosso", la salute è "rosso" e il voto ≤4. Se gli interventi sono solo "giallo", voto 5–7. Se è tutto buono, voto 8–10. Scegli il numero PRECISO in base a quanti/quanto gravi sono i problemi: due problemi rossi pesano più di uno. Evita il 6 "di default".
 - "quadro_generale": 2–3 frasi da medico sullo stato di salute complessivo.
 - "problema_principale": UNA frase, il problema n.1 da curare subito.
 - "metriche": i NUMERI CHIAVE letti dal report, da mostrare all'utente come "cartella clinica". Includi tutto ciò che è presente nei dati, ad esempio:
@@ -103,6 +113,13 @@ const SYSTEM_PROMPT = `Sei "Meta Ads Clinic", il medico delle campagne Meta Ads 
    - Titolo/i principali dell'annuncio se presenti → stato "neutro".
    - Città / aree più performanti se c'è un breakdown geografico (es. "Milano 12 lead, Roma 8") → stato in base al rendimento.
    Per ogni metrica: label breve, valore con unità (es. "1.560 clic", "9,40€", "32%"), stato "verde"|"giallo"|"rosso"|"neutro". Non inventare: metti solo ciò che è nei dati.
+- "ads": se il file contiene le SINGOLE inserzioni (righe per inserzione) e una colonna di stato/recapito (es. "Recapito", "Stato": Attiva / Disattivata / In pausa / Bozza), elenca le inserzioni più rilevanti (le migliori e le peggiori). Per ognuna:
+   - "nome": il nome dell'inserzione.
+   - "stato": "attiva" | "non attiva" | "sconosciuto" (in base alla colonna; se non c'è la colonna stato, "sconosciuto").
+   - "giudizio": "verde" (va bene) | "giallo" | "rosso".
+   - "nota": la metrica chiave che la qualifica (es. "CPL 6€, la migliore" / "frequenza 5,1, satura").
+   - "azione": cosa fare, COERENTE con lo stato. Per le ATTIVE: "Scala (+20% budget)", "Mantieni e monitora", "Rinnova la creatività", "Metti in pausa". Per le NON ATTIVE: "Riattiva e scala (andava bene)" oppure "Lasciala spenta (non rendeva)".
+   Se il file NON ha il dettaglio per inserzione o NON ha la colonna stato, lascia "ads" VUOTO e aggiungi in "cosa_serve": "Esporta a livello Inserzione con la colonna Recapito/Stato per dividere ads attive e non attive".
 - "cosa_funziona": 2–4 punti positivi, ognuno col numero che lo dimostra.
 - "interventi": ogni voce è un BOX (un'area da curare). Ordina dal più grave. Campi:
    - "area": ambito (es. "Creatività", "Copy", "Targeting/Pubblico", "Budget", "Offerta", "Landing", "CPL/CPA").
@@ -139,6 +156,21 @@ const DIAGNOSIS_SCHEMA = {
         required: ["label", "valore", "stato"],
       },
     },
+    ads: {
+      type: "array",
+      items: {
+        type: "object",
+        additionalProperties: false,
+        properties: {
+          nome: { type: "string" },
+          stato: { type: "string", enum: ["attiva", "non attiva", "sconosciuto"] },
+          giudizio: { type: "string", enum: ["verde", "giallo", "rosso"] },
+          nota: { type: "string" },
+          azione: { type: "string" },
+        },
+        required: ["nome", "stato", "giudizio", "nota", "azione"],
+      },
+    },
     cosa_funziona: { type: "array", items: { type: "string" } },
     interventi: {
       type: "array",
@@ -166,6 +198,7 @@ const DIAGNOSIS_SCHEMA = {
     "quadro_generale",
     "problema_principale",
     "metriche",
+    "ads",
     "cosa_funziona",
     "interventi",
     "azioni_urgenti",
